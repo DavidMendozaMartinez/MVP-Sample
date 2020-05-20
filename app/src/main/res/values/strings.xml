@@ -3,4 +3,8 @@
     <string name="hint_email">Email</string>
     <string name="hint_password">Password</string>
     <string name="button_login">Login</string>
+
+    <string name="success_login">Login success</string>
+    <string name="error_email">Email cannot be empty</string>
+    <string name="error_password">Password cannot be empty</string>
 </resources>
