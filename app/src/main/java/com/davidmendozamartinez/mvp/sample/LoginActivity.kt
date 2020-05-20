@@ -1,55 +1,52 @@
 package com.davidmendozamartinez.mvp.sample
 
 import android.os.Bundle
-import android.view.View
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.isVisible
 import androidx.lifecycle.lifecycleScope
 import com.davidmendozamartinez.mvp.sample.databinding.ActivityLoginBinding
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.launch
 
-class LoginActivity : AppCompatActivity() {
+class LoginActivity : AppCompatActivity(), LoginView {
+
+    private lateinit var binding: ActivityLoginBinding
+    private val presenter = LoginPresenter(this, LoginInteractor(), lifecycleScope)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val binding = ActivityLoginBinding.inflate(layoutInflater)
+        binding = ActivityLoginBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        with(binding) {
-            buttonLogin.setOnClickListener {
-                lifecycleScope.launch {
-                    progressBarLogin.visibility = View.VISIBLE
-
-                    val errorEmail = async(Dispatchers.IO) {
-                        Thread.sleep(2000)
-                        getEmailError(editTextEmail.text.toString())
-                    }
-
-                    val errorPassword = async(Dispatchers.IO) {
-                        Thread.sleep(2000)
-                        getPasswordError(editTextPassword.text.toString())
-                    }
-
-                    if (errorEmail.await() == null && errorPassword.await() == null) {
-                        Toast.makeText(
-                            this@LoginActivity, R.string.success_login, Toast.LENGTH_SHORT
-                        ).show()
-                    } else {
-                        editTextEmail.error = errorEmail.await()
-                        editTextPassword.error = errorPassword.await()
-                    }
-
-                    progressBarLogin.visibility = View.GONE
-                }
-            }
+        binding.buttonLogin.setOnClickListener {
+            presenter.validateCredentials(
+                binding.editTextEmail.text.toString(),
+                binding.editTextPassword.text.toString()
+            )
         }
     }
 
-    private fun getEmailError(email: String): String? =
-        if (email.isEmpty()) getString(R.string.error_email) else null
+    override fun showProgress() {
+        binding.progressBarLogin.isVisible = true
+    }
 
-    private fun getPasswordError(password: String): String? =
-        if (password.isEmpty()) getString(R.string.error_password) else null
+    override fun hideProgress() {
+        binding.progressBarLogin.isVisible = false
+    }
+
+    override fun setEmailError() {
+        binding.editTextEmail.error = getString(R.string.error_email)
+    }
+
+    override fun setPasswordError() {
+        binding.editTextPassword.error = getString(R.string.error_password)
+    }
+
+    override fun showSuccess() {
+        Toast.makeText(this, R.string.success_login, Toast.LENGTH_SHORT).show()
+    }
+
+    override fun onDestroy() {
+        presenter.onDestroy()
+        super.onDestroy()
+    }
 }
